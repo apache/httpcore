@@ -23,7 +23,7 @@
    individuals on behalf of the Apache Software Foundation.  For more
    information on the Apache Software Foundation, please see
    <http://www.apache.org />.
- --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+ --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
     <groupId>org.apache.httpcomponents</groupId>
     <artifactId>httpcomponents-parent</artifactId>
@@ -33,9 +33,9 @@
   <groupId>org.apache.httpcomponents.core5</groupId>
   <artifactId>httpcore5-parent</artifactId>
   <name>Apache HttpComponents Core Parent</name>
-  <version>5.1.1-SNAPSHOT</version>
+  <version>5.2-alpha1-SNAPSHOT</version>
   <description>Apache HttpComponents Core is a library of components for building HTTP enabled services</description>
-  <url>https://hc.apache.org/httpcomponents-core-5.1.x/${project.version}/</url>
+  <url>https://hc.apache.org/httpcomponents-core-5.1.x/</url>
   <inceptionYear>2005</inceptionYear>
   <packaging>pom</packaging>
 
@@ -48,16 +48,8 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/httpcomponents-core.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/httpcomponents-core.git</developerConnection>
     <url>https://github.com/apache/httpcomponents-core/tree/${project.scm.tag}</url>
-    <tag>5.1.1-SNAPSHOT</tag>
+    <tag>5.2.x</tag>
   </scm>
-
-  <distributionManagement>
-    <site>
-      <id>apache.website</id>
-      <name>Apache HttpComponents Website</name>
-      <url>scm:svn:https://svn.apache.org/repos/asf/httpcomponents/site/components/httpcomponents-core-5.1.x/LATEST/</url>
-    </site>
-  </distributionManagement>
 
   <modules>
     <module>httpcore5</module>
@@ -209,7 +201,6 @@
         <reportSets>
           <reportSet>
             <reports>
-              <report>index</report>
               <report>dependency-info</report>
               <report>dependency-management</report>
               <report>issue-management</report>
@@ -230,31 +221,11 @@
             <link>${project.url}/httpcore5/apidocs/</link>
             <link>${project.url}/httpcore5-h2/apidocs/</link>
           </links>
-          <notimestamp>true</notimestamp>
-          <groups>
-            <group>
-              <title>Apache HttpCore HTTP/1.1</title>
-              <packages>org.apache.hc.core5*</packages>
-            </group>
-            <group>
-              <title>Apache HttpCore HTTP/2</title>
-              <packages>org.apache.hc.core5.http2*</packages>
-            </group>
-            <group>
-              <title>Apache HttpCore Reactive Streams Bindings</title>
-              <packages>org.apache.hc.core5.reactive*</packages>
-            </group>
-            <group>
-              <title>Apache HttpCore Testing</title>
-              <packages>org.apache.hc.core5.testing*:org.apache.hc.core5.benchmark*</packages>
-            </group>
-          </groups>
         </configuration>
         <reportSets>
           <reportSet>
             <reports>
               <report>javadoc</report>
-              <report>aggregate</report>
             </reports>
           </reportSet>
         </reportSets>

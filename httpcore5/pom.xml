@@ -23,17 +23,19 @@
    individuals on behalf of the Apache Software Foundation.  For more
    information on the Apache Software Foundation, please see
    <http://www.apache.org />.
- --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+ --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.httpcomponents.core5</groupId>
     <artifactId>httpcore5-parent</artifactId>
-    <version>5.1.1-SNAPSHOT</version>
+    <version>5.2-alpha1-SNAPSHOT</version>
   </parent>
   <artifactId>httpcore5</artifactId>
   <name>Apache HttpComponents Core HTTP/1.1</name>
   <inceptionYear>2005</inceptionYear>
   <description>Apache HttpComponents HTTP/1.1 core components</description>
+  <url>https://hc.apache.org/httpcomponents-core-5.1.x/</url>
+  <packaging>jar</packaging>
 
   <properties>
     <Automatic-Module-Name>org.apache.httpcomponents.core5.httpcore5</Automatic-Module-Name>
@@ -68,15 +70,6 @@
   </dependencies>
 
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-        <includes>
-          <include>**/*.properties</include>
-        </includes>
-      </resource>
-    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -89,7 +82,48 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>pre-site</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/site/examples</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/test/java/org/apache/hc/core5/http/examples</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+            <include>**/*.properties</include>
+        </includes>
+      </resource>
+    </resources>
   </build>
 
   <reporting>
@@ -100,7 +134,6 @@
         <reportSets>
           <reportSet>
             <reports>
-              <report>index</report>
               <report>dependencies</report>
               <report>dependency-info</report>
               <report>summary</report>

@@ -27,13 +27,15 @@
   <parent>
     <artifactId>httpcore5-parent</artifactId>
     <groupId>org.apache.httpcomponents.core5</groupId>
-    <version>5.1.1-SNAPSHOT</version>
+    <version>5.2-alpha1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>httpcore5-reactive</artifactId>
   <name>Apache HttpComponents Core Reactive Extensions</name>
   <description>Apache HttpComponents Reactive Streams Bindings</description>
+  <url>https://hc.apache.org/httpcomponents-core-5.1.x/</url>
+  <packaging>jar</packaging>
 
   <properties>
     <Automatic-Module-Name>org.apache.httpcomponents.core5.httpcore5.reactive</Automatic-Module-Name>
@@ -48,7 +50,7 @@
     <dependency>
       <groupId>org.reactivestreams</groupId>
       <artifactId>reactive-streams</artifactId>
-      <version>1.0.3</version>
+      <version>1.0.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -63,6 +65,31 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>pre-site</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/site/examples</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/test/java/org/apache/hc/core5/reactive/examples</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <reporting>
     <plugins>
       <plugin>
@@ -71,7 +98,6 @@
         <reportSets>
           <reportSet>
             <reports>
-              <report>index</report>
               <report>dependencies</report>
               <report>dependency-info</report>
               <report>summary</report>
