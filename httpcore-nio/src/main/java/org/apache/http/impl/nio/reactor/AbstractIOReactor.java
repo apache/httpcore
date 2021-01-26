@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ConcurrentModificationException;
 
 import org.apache.http.nio.reactor.IOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
@@ -62,11 +63,17 @@ public abstract class AbstractIOReactor implements IOReactor {
     private final Object statusMutex;
     private final long selectTimeout;
     private final boolean interestOpsQueueing;
-    private final Selector selector;
+    private Selector selector;
     private final Set<IOSession> sessions;
     private final Queue<InterestOpEntry> interestOpsQueue;
     private final Queue<IOSession> closedSessions;
     private final Queue<ChannelEntry> newChannels;
+
+    private final boolean epollBugWorkaround;
+
+    private final int nioBugTimesThreshold = 10;
+
+    private int nioBugTimes = 0;
 
     /**
      * Creates new AbstractIOReactor instance.
@@ -74,8 +81,8 @@ public abstract class AbstractIOReactor implements IOReactor {
      * @param selectTimeout the select timeout.
      * @throws IOReactorException in case if a non-recoverable I/O error.
      */
-    public AbstractIOReactor(final long selectTimeout) throws IOReactorException {
-        this(selectTimeout, false);
+    public AbstractIOReactor(final long selectTimeout, final boolean epollBugWorkaround) throws IOReactorException {
+        this(selectTimeout, false, false);
     }
 
     /**
@@ -88,7 +95,7 @@ public abstract class AbstractIOReactor implements IOReactor {
      *
      * @since 4.1
      */
-    public AbstractIOReactor(final long selectTimeout, final boolean interestOpsQueueing) throws IOReactorException {
+    public AbstractIOReactor(final long selectTimeout, final boolean interestOpsQueueing, final boolean epollBugWorkaround) throws IOReactorException {
         super();
         Args.positive(selectTimeout, "Select timeout");
         this.selectTimeout = selectTimeout;
@@ -104,6 +111,7 @@ public abstract class AbstractIOReactor implements IOReactor {
         }
         this.statusMutex = new Object();
         this.status = IOReactorStatus.INACTIVE;
+        this.epollBugWorkaround = epollBugWorkaround;
     }
 
     /**
@@ -251,12 +259,22 @@ public abstract class AbstractIOReactor implements IOReactor {
             for (;;) {
 
                 final int readyCount;
+                long t0 = 0;
+                if (epollBugWorkaround) {
+                    t0 = System.currentTimeMillis();
+                }
                 try {
-                    readyCount = this.selector.select(this.selectTimeout);
+                    readyCount = this.selector.select(selectTimeout);
                 } catch (final InterruptedIOException ex) {
                     throw ex;
                 } catch (final IOException ex) {
                     throw new IOReactorException("Unexpected selector failure", ex);
+                }
+                if (epollBugWorkaround && System.currentTimeMillis() - t0 < 100 && readyCount == 0) {
+                    nioBugTimes++;
+                    if (nioBugTimes == nioBugTimesThreshold) {
+                        rebuildSelector();
+                    }
                 }
 
                 if (this.status == IOReactorStatus.SHUT_DOWN) {
@@ -273,6 +291,7 @@ public abstract class AbstractIOReactor implements IOReactor {
 
                 // Process selected I/O events
                 if (readyCount > 0) {
+                    nioBugTimes = 0;
                     processEvents(this.selector.selectedKeys());
                 }
 
@@ -306,6 +325,59 @@ public abstract class AbstractIOReactor implements IOReactor {
             synchronized (this.statusMutex) {
                 this.statusMutex.notifyAll();
             }
+        }
+    }
+
+    public void rebuildSelector() {
+
+        final Selector oldSelector = selector;
+        final Selector newSelector;
+        nioBugTimes = 0;
+
+        if (oldSelector == null) {
+            return;
+        }
+
+        try {
+            newSelector = Selector.open();
+        } catch (final Exception e) {
+            return;
+        }
+
+        // Register all channels to the new Selector.
+        for (;;) {
+            try {
+                for (final SelectionKey key : oldSelector.keys()) {
+                    try {
+                        if (key.channel().keyFor(newSelector) != null) {
+                            continue;
+                        }
+
+                        final int interestOps = key.interestOps();
+                        key.channel().register(newSelector, interestOps, key.attachment());
+                        key.cancel();
+                    } catch (final Exception e) {
+                        try {
+                            newSelector.close();
+                        } catch (final IOException ex) {
+                            //ignore
+                        }
+                        return;
+                    }
+                }
+            } catch (final ConcurrentModificationException e) {
+                continue;
+            }
+            break;
+        }
+
+        selector = newSelector;
+
+        try {
+            // time to close the old selector as everything else is registered to the new one
+            oldSelector.close();
+        } catch (final Throwable t) {
+            //ignore
         }
     }
 
